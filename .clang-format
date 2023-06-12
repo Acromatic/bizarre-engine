@@ -1,0 +1,40 @@
+---
+BasedOnStyle: LLVM
+AlignAfterOpenBracket: BlockIndent
+AlignArrayOfStructures: Left
+AlignConsecutiveAssignments:
+  Enabled: true
+  AcrossComments: true
+  AlignCompound: true
+AlignConsecutiveBitFields:
+  Enabled: true
+  AcrossComments: true
+  AlignCompound: true
+AlignConsecutiveMacros:
+  Enabled: true
+  AcrossComments: true
+AlignEscapedNewlines: Left
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortEnumsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortLoopsOnASingleLine: true
+AlwaysBreakTemplateDeclarations: Yes
+BinPackArguments: false
+BinPackParameters: false
+BreakBeforeBinaryOperators: NonAssignment
+BreakConstructorInitializers: AfterColon
+BreakInheritanceList: AfterColon
+ColumnLimit: 100
+CompactNamespaces: true
+DerivePointerAlignment: true
+ExperimentalAutoDetectBinPacking: true
+IncludeBlocks: Regroup
+IndentCaseLabels: true
+IndentPPDirectives: BeforeHash
+InsertNewlineAtEOF: true
+NamespaceIndentation: Inner
+PackConstructorInitializers: CurrentLine
+SeparateDefinitionBlocks: Always
+SortIncludes: CaseInsensitive
+SpaceAfterTemplateKeyword: false
+TabWidth: 4
