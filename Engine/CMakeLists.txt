@@ -14,3 +14,5 @@ file(GLOB_RECURSE _H_SRS src/*.h)
 message(STATUS "Engine sources: ${_CPP_SRCS} ${_H_SRCS}")
 
 target_sources(Engine PUBLIC ${_CPP_SRCS} ${_H_SRS})
+
+target_link_libraries(Engine PUBLIC X11 xcb)

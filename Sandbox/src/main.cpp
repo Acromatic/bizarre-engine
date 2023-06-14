@@ -1,21 +1,21 @@
-#include <BizarreEngine.h>
+#include "core/log.h"
+#include "core/window.h"
+#include "platform/platform.h"
 
-int main() {
+int main(int argc, char *argv[]) {
   BE::InitLogging(BE::LogLevel::Trace);
-  LOG_TRACE("Hello, World!");
-  LOG_TRACE("Trace Message: %s", "Hello, World!");
-  LOG_DEBUG("Hello, World!");
-  LOG_DEBUG("Debug Message: %s", "Hello, World!");
-  LOG_INFO("Hello, World!");
-  LOG_INFO("Info Message: %s", "Hello, World!");
-  LOG_WARN("Hello, World!");
-  LOG_WARN("Warn Message: %s", "Hello, World!");
-  LOG_ERROR("Hello, World!");
-  LOG_ERROR("Error Message: %s", "Hello, World!");
-  LOG_FATAL("Hello, World!");
-  LOG_FATAL("Fatal Message: %s", "Hello, World!");
 
-  BE_ASSERT_MSG(false, "bad assertion");
+  BE::PlatformInit();
+  BE::Window *window = BE::Window::Create("Hello World", 800, 600);
+  window->Show();
+
+  bool result = true;
+  while (result) {
+    result = BE::PlatformPollEvents();
+  }
+
+  BE::PlatformShutdown();
   BE::ShutdownLogging();
+
   return 0;
 }

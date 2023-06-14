@@ -65,4 +65,10 @@ static_assert(sizeof(BeFlags) == 8, "BeFlags must be 8 bytes");
   #error "Unknown platform"
 #endif
 
-#define BE_DEBUG_BREAK() __debugbreak()
+#if defined(BE_PLATFORM_WINDOWS)
+  #define BE_DEBUG_BREAK() __debugbreak()
+#elif defined(BE_PLATFORM_LINUX)
+  #define BE_DEBUG_BREAK() __builtin_trap()
+#elif defined(BE_PLATFORM_MACOS)
+  #define BE_DEBUG_BREAK() __builtin_trap()
+#endif
