@@ -1,6 +1,7 @@
 #include "containers/DynamicArray.h"
 #include "core/defines.h"
 
+#include <cstdlib>
 #include <cstring>
 
 #if defined(BE_PLATFORM_LINUX)
@@ -10,6 +11,7 @@
 
   #include <unistd.h>
   #include <xcb/xcb.h>
+  #include <xcb/xcb_util.h>
 
 namespace BE {
 struct PlatformState {
@@ -67,22 +69,40 @@ void PlatformShutdown() {
   s_State.init = false;
 }
 
-b8 PlatformCreateNativeWindow(const char* title, u32 width, u32 height, void* windowDataHandle) {
+b8 PlatformCreateNativeWindow(
+    const char* title,
+    u32 width,
+    u32 height,
+    i32 x,
+    i32 y,
+    void* windowDataHandle,
+    const Window* parent
+) {
   xcb_window_t windowId = xcb_generate_id(s_State.connection);
   u32 valueMask         = XCB_CW_BACK_PIXEL | XCB_CW_EVENT_MASK;
   u32 valueList[2]{};
-  valueList[0] = s_State.screen->black_pixel;
+  if (parent) {
+    valueList[0] = s_State.screen->white_pixel;
+  } else {
+    valueList[0] = s_State.screen->black_pixel;
+  }
   valueList[1] = XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE
                  | XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_KEY_RELEASE | XCB_EVENT_MASK_EXPOSURE
                  | XCB_EVENT_MASK_POINTER_MOTION | XCB_EVENT_MASK_STRUCTURE_NOTIFY;
 
+  xcb_window_t parentWindowId = s_State.screen->root;
+
+  // if (parent) {
+  //   parentWindowId = *(xcb_window_t*)parent->NativeHandle();
+  // }
+
   xcb_create_window(
       s_State.connection,
-      s_State.screen->root_depth,
+      XCB_COPY_FROM_PARENT,
       windowId,
-      s_State.screen->root,
-      0,
-      0,
+      parentWindowId,
+      (i16)x,
+      (i16)y,
       width,
       height,
       0,
@@ -103,6 +123,51 @@ b8 PlatformCreateNativeWindow(const char* title, u32 width, u32 height, void* wi
       title
   );
 
+  xcb_change_property(
+      s_State.connection,
+      XCB_PROP_MODE_REPLACE,
+      windowId,
+      XCB_ATOM_WM_ICON_NAME,
+      XCB_ATOM_STRING,
+      8,
+      strlen(title),
+      title
+  );
+
+  if (parent) {
+    xcb_window_t transientFor = *(xcb_window_t*)parent->NativeHandle();
+
+    xcb_change_property(
+        s_State.connection,
+        XCB_PROP_MODE_REPLACE,
+        windowId,
+        XCB_ATOM_WM_TRANSIENT_FOR,
+        XCB_ATOM_WINDOW,
+        32,
+        1,
+        &transientFor
+    );
+
+  } else {
+    i32 titleLen  = strlen(title);
+    char* wmClass = new char[2 * titleLen + 1]{0};
+    for (u32 i{0}; i < strlen(title); ++i) {
+      wmClass[i]                = title[i];
+      wmClass[i + titleLen + 1] = title[i];
+    }
+
+    xcb_change_property(
+        s_State.connection,
+        XCB_PROP_MODE_REPLACE,
+        windowId,
+        XCB_ATOM_WM_CLASS,
+        XCB_ATOM_STRING,
+        8,
+        2 * strlen(title) + 1,
+        wmClass
+    );
+  }
+
   xcb_intern_atom_cookie_t deleteCookie =
       xcb_intern_atom(s_State.connection, 0, strlen("WM_DELETE_WINDOW"), "WM_DELETE_WINDOW");
   xcb_intern_atom_cookie_t wmProtocolsCookie =
@@ -115,6 +180,9 @@ b8 PlatformCreateNativeWindow(const char* title, u32 width, u32 height, void* wi
 
   s_State.wmProtocols    = wmProtocolsReply->atom;
   s_State.wmDeleteWindow = deleteReply->atom;
+
+  PlatformFree(wmProtocolsReply);
+  PlatformFree(deleteReply);
 
   xcb_change_property(
       s_State.connection,
@@ -165,6 +233,14 @@ void PlatformDestroyNativeWindow(void* windowHandle) {}
 
 void PlatformSleep(u64 ms) {
   usleep(ms * 1000);
+}
+
+void* PlatformAlloc(be_size size) {
+  return malloc(size);
+}
+
+void PlatformFree(void* ptr) {
+  free(ptr);
 }
 
 } // namespace BE

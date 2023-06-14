@@ -4,12 +4,22 @@
 #include "platform/platform.h"
 
 namespace BE {
-X11Window::X11Window(const char* title, u32 width, u32 height) :
+X11Window::X11Window(const char* title, u32 width, u32 height, i32 x, i32 y) :
     m_Title(title),
     m_Width(width),
     m_Height(height) {
   m_Context = new X11WindowContext{0};
-  PlatformCreateNativeWindow(title, width, height, m_Context);
+  PlatformCreateNativeWindow(title, width, height, x, y, m_Context);
+}
+
+X11Window::X11Window(
+    const char* title, u32 width, u32 height, i32 x, i32 y, const X11Window& parent
+) :
+    m_Title(title),
+    m_Width(width),
+    m_Height(height) {
+  m_Context = new X11WindowContext{0};
+  PlatformCreateNativeWindow(title, width, height, x, y, m_Context, &parent);
 }
 
 X11Window::~X11Window() {
@@ -25,6 +35,10 @@ void* X11Window::NativeHandle() const {
   }
 
   return nullptr;
+}
+
+Window* X11Window::CreateChild(const char* title, u32 width, u32 height, i32 x, i32 y) {
+  return new X11Window(title, width, height, x, y, *this);
 }
 
 void X11Window::SetTitle(const String& title) {}
