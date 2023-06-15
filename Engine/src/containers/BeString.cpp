@@ -1,6 +1,6 @@
-#include "be_string.h"
+#include "BeString.h"
 
-#include "core/be_asserts.h"
+#include "core/BeAssert.h"
 
 #include <cstring>
 

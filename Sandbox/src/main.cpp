@@ -1,6 +1,6 @@
-#include "core/log.h"
-#include "core/window.h"
-#include "platform/platform.h"
+#include "core/Log.h"
+#include "core/Window.h"
+#include "platform/Platform.h"
 
 int main(int argc, char *argv[]) {
   BE::InitLogging(BE::LogLevel::Trace);

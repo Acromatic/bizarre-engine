@@ -1,8 +1,8 @@
 #pragma once
 
-#include "core/be_asserts.h"
-#include "core/defines.h"
-#include "platform/platform.h"
+#include "core/BeAssert.h"
+#include "core/Defines.h"
+#include "platform/Platform.h"
 
 namespace BE {
 template<typename T>

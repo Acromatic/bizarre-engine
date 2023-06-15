@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/defines.h"
+#include "core/Defines.h"
 
 #include <initializer_list>
 

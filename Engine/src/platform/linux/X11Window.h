@@ -1,12 +1,12 @@
 #pragma once
 
-#include "core/defines.h"
-
-#include <xcb/xcb.h>
+#include "core/Defines.h"
 
 #if defined(BE_PLATFORM_LINUX)
 
-  #include "core/window.h"
+  #include "core/Window.h"
+
+  #include <xcb/xcb.h>
 
 namespace BE {
 

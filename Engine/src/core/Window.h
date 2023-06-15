@@ -1,7 +1,7 @@
 #pragma once
 
-#include "containers/be_string.h"
-#include "defines.h"
+#include "containers/BeString.h"
+#include "Defines.h"
 #include "math/Vector.h"
 
 namespace BE {

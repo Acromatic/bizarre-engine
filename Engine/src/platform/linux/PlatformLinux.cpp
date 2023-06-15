@@ -1,14 +1,14 @@
-#include "containers/DynamicArray.h"
-#include "core/defines.h"
-#include "platform/linux/x11_utils.h"
+#include "core/Defines.h"
 
 #include <cstdlib>
 #include <cstring>
 
 #if defined(BE_PLATFORM_LINUX)
-  #include "core/log.h"
-  #include "platform/platform.h"
-  #include "X11_window.h"
+  #include "containers/DynamicArray.h"
+  #include "core/Log.h"
+  #include "platform/linux/X11Utils.h"
+  #include "platform/Platform.h"
+  #include "X11Window.h"
 
   #include <unistd.h>
   #include <xcb/xcb.h>

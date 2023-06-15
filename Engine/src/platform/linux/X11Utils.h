@@ -1,7 +1,7 @@
 #pragma once
 
-#include "core/defines.h"
-#include "core/window.h"
+#include "core/Defines.h"
+#include "core/Window.h"
 
 #include <xcb/xcb.h>
 

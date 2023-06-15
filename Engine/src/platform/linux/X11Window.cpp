@@ -1,8 +1,8 @@
-#include "X11_window.h"
+#include "X11Window.h"
 
-#include "core/log.h"
-#include "platform/linux/x11_utils.h"
-#include "platform/platform.h"
+#include "core/Log.h"
+#include "platform/linux/X11Utils.h"
+#include "platform/Platform.h"
 
 namespace BE {
 X11Window::X11Window(

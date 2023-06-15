@@ -1,9 +1,9 @@
-#include "window.h"
+#include "Window.h"
 
-#include "core/be_asserts.h"
+#include "core/BeAssert.h"
 
 #if defined(BE_PLATFORM_LINUX)
-  #include "platform/linux/X11_window.h"
+  #include "platform/linux/X11Window.h"
 #endif
 
 namespace BE {

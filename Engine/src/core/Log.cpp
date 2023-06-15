@@ -1,8 +1,8 @@
-#include "log.h"
+#include "Log.h"
 
-#include "be_asserts.h"
-#include "containers/be_string.h"
-#include "defines.h"
+#include "BeAssert.h"
+#include "containers/BeString.h"
+#include "Defines.h"
 
 #include <bits/types/time_t.h>
 #include <cstdio>

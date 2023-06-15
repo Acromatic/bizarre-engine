@@ -1,5 +1,5 @@
 #pragma once
 
-#include "containers/be_string.h"
-#include "core/be_asserts.h"
-#include "core/log.h"
+#include "containers/BeString.h"
+#include "core/BeAsserts.h"
+#include "core/Log.h"
