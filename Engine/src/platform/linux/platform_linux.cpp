@@ -25,6 +25,37 @@ struct PlatformState {
 
 PlatformState s_State{0};
 
+// internal functions
+
+static inline xcb_atom_t retrieveAtom(const char* name, bool ifOnlyExists) {
+  xcb_intern_atom_cookie_t cookie =
+      xcb_intern_atom(s_State.connection, ifOnlyExists, strlen(name), name);
+  xcb_intern_atom_reply_t* reply = xcb_intern_atom_reply(s_State.connection, cookie, nullptr);
+
+  if (!reply) {
+    return XCB_ATOM_NONE;
+  }
+
+  xcb_atom_t atom = reply->atom;
+  free(reply);
+
+  return atom;
+}
+
+static inline xcb_atom_t WindowTypeToXcbAtom_internal(WindowType type) {
+  switch (type) {
+    case WindowType::MainWindow:
+    case WindowType::NormalWindow: return retrieveAtom("_NET_WM_WINDOW_TYPE_NORMAL", true);
+    case WindowType::Menu: return retrieveAtom("_NET_WM_WINDOW_TYPE_MENU", true);
+    case WindowType::Popup:
+    case WindowType::Toolbar: return retrieveAtom("_NET_WM_WINDOW_TYPE_TOOLBAR", true);
+    case WindowType::Dialog: return retrieveAtom("_NET_WM_WINDOW_TYPE_DIALOG", true);
+    case WindowType::Splash: return retrieveAtom("_NET_WM_WINDOW_TYPE_SPLASH", true);
+    case WindowType::Utility: return retrieveAtom("_NET_WM_WINDOW_TYPE_UTILITY", true);
+    default: return XCB_ATOM_NONE;
+  }
+}
+
 // Exposed Platfrom API
 
 b8 PlatformInit() {
@@ -75,9 +106,25 @@ b8 PlatformCreateNativeWindow(
     u32 height,
     i32 x,
     i32 y,
+    WindowType type,
     void* windowDataHandle,
     const Window* parent
 ) {
+  BE_ASSERT_MSG(s_State.init, "Platform not initialized");
+  BE_ASSERT_MSG(windowDataHandle, "Window data handle is null");
+
+  if (type == WindowType::MainWindow || type == WindowType::Splash) {
+    if (parent) {
+      LOG_ERROR("Main window cannot have a parent");
+      return false;
+    }
+  } else {
+    if (!parent) {
+      LOG_ERROR("Child window must have a parent");
+      return false;
+    }
+  }
+
   xcb_window_t windowId = xcb_generate_id(s_State.connection);
   u32 valueMask         = XCB_CW_BACK_PIXEL | XCB_CW_EVENT_MASK;
   u32 valueList[2]{};
@@ -90,17 +137,11 @@ b8 PlatformCreateNativeWindow(
                  | XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_KEY_RELEASE | XCB_EVENT_MASK_EXPOSURE
                  | XCB_EVENT_MASK_POINTER_MOTION | XCB_EVENT_MASK_STRUCTURE_NOTIFY;
 
-  xcb_window_t parentWindowId = s_State.screen->root;
-
-  // if (parent) {
-  //   parentWindowId = *(xcb_window_t*)parent->NativeHandle();
-  // }
-
   xcb_create_window(
       s_State.connection,
       XCB_COPY_FROM_PARENT,
       windowId,
-      parentWindowId,
+      s_State.screen->root,
       (i16)x,
       (i16)y,
       width,
@@ -134,7 +175,7 @@ b8 PlatformCreateNativeWindow(
       title
   );
 
-  if (parent) {
+  if (type != WindowType::MainWindow && type != WindowType::Splash) {
     xcb_window_t transientFor = *(xcb_window_t*)parent->NativeHandle();
 
     xcb_change_property(
@@ -167,6 +208,20 @@ b8 PlatformCreateNativeWindow(
         wmClass
     );
   }
+
+  xcb_atom_t netWmWindowType = retrieveAtom("_NET_WM_WINDOW_TYPE", false);
+  xcb_atom_t windowType      = WindowTypeToXcbAtom_internal(type);
+
+  xcb_change_property(
+      s_State.connection,
+      XCB_PROP_MODE_REPLACE,
+      windowId,
+      netWmWindowType,
+      XCB_ATOM_ATOM,
+      32,
+      1,
+      &windowType
+  );
 
   xcb_intern_atom_cookie_t deleteCookie =
       xcb_intern_atom(s_State.connection, 0, strlen("WM_DELETE_WINDOW"), "WM_DELETE_WINDOW");

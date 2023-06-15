@@ -14,6 +14,7 @@ b8 PlatformCreateNativeWindow(
     u32 height,
     i32 x,
     i32 y,
+    WindowType type,
     void* windowHandle,
     const Window* parent = nullptr
 );

@@ -18,10 +18,18 @@ struct X11WindowContext {
 
 class X11Window : public Window {
 public:
-  X11Window(const char* title, u32 width, u32 height, i32 x, i32 y);
+  X11Window(
+      const char* title,
+      u32 width,
+      u32 height,
+      i32 x,
+      i32 y,
+      WindowType type = WindowType::MainWindow
+  );
   virtual ~X11Window();
 
-  virtual Window* CreateChild(const char* title, u32 width, u32 height, i32 x, i32 y) override;
+  virtual Window*
+  CreateChild(const char* title, u32 width, u32 height, i32 x, i32 y, WindowType type) override;
 
   virtual void* NativeHandle() const override;
 
@@ -43,7 +51,15 @@ public:
   virtual b8 PollEvents() override;
 
 private:
-  X11Window(const char* title, u32 width, u32 heigth, i32 x, i32 y, const X11Window& parent);
+  X11Window(
+      const char* title,
+      u32 width,
+      u32 heigth,
+      i32 x,
+      i32 y,
+      WindowType type,
+      const X11Window& parent
+  );
 
 private:
   String m_Title;
