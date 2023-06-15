@@ -2,6 +2,7 @@
 
 #include "containers/be_string.h"
 #include "defines.h"
+#include "math/Vector.h"
 
 namespace BE {
 
@@ -39,8 +40,13 @@ public:
   virtual void SetWidth(u32 width)           = 0;
   virtual void SetHeight(u32 height)         = 0;
 
-  virtual b8 Show()    = 0;
-  virtual void Close() = 0;
+  virtual Vec2i Position() const         = 0;
+  virtual void SetPosition(i32 x, i32 y) = 0;
+
+  virtual void SetPosition(const Vec2i& pos) { SetPosition(pos.x, pos.y); }
+
+  virtual b8 Show(b8 forcePosition = false) = 0;
+  virtual void Close()                      = 0;
 
   virtual b8 ShouldClose() const = 0;
   virtual b8 PollEvents()        = 0;

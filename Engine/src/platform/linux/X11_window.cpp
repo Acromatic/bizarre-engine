@@ -7,7 +7,8 @@ namespace BE {
 X11Window::X11Window(const char* title, u32 width, u32 height, i32 x, i32 y, WindowType type) :
     m_Title(title),
     m_Width(width),
-    m_Height(height) {
+    m_Height(height),
+    m_Position{x, y} {
   m_Context = new X11WindowContext{0};
   PlatformCreateNativeWindow(title, width, height, x, y, type, m_Context);
 }
@@ -17,7 +18,8 @@ X11Window::X11Window(
 ) :
     m_Title(title),
     m_Width(width),
-    m_Height(height) {
+    m_Height(height),
+    m_Position{x, y} {
   m_Context = new X11WindowContext{0};
   PlatformCreateNativeWindow(title, width, height, x, y, type, m_Context, &parent);
 }
@@ -49,8 +51,20 @@ void X11Window::SetHeight(u32 height) {
   m_Height = height;
 }
 
-b8 X11Window::Show() {
+void X11Window::SetPosition(i32 x, i32 y) {
+  m_Position = {x, y};
+  xcb_configure_window(
+      m_Context->connection,
+      m_Context->window,
+      XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y,
+      &m_Position
+  );
+}
+
+b8 X11Window::Show(b8 forcePosition) {
   xcb_map_window(m_Context->connection, m_Context->window);
+  if (forcePosition)
+    SetPosition(m_Position.x, m_Position.y);
   xcb_flush(m_Context->connection);
   return true;
 }
