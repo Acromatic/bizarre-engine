@@ -1,5 +1,6 @@
 #include "containers/DynamicArray.h"
 #include "core/defines.h"
+#include "platform/linux/x11_utils.h"
 
 #include <cstdlib>
 #include <cstring>
@@ -27,31 +28,22 @@ PlatformState s_State{0};
 
 // internal functions
 
-static inline xcb_atom_t retrieveAtom(const char* name, bool ifOnlyExists) {
-  xcb_intern_atom_cookie_t cookie =
-      xcb_intern_atom(s_State.connection, ifOnlyExists, strlen(name), name);
-  xcb_intern_atom_reply_t* reply = xcb_intern_atom_reply(s_State.connection, cookie, nullptr);
-
-  if (!reply) {
-    return XCB_ATOM_NONE;
-  }
-
-  xcb_atom_t atom = reply->atom;
-  free(reply);
-
-  return atom;
-}
-
 static inline xcb_atom_t WindowTypeToXcbAtom_internal(WindowType type) {
   switch (type) {
     case WindowType::MainWindow:
-    case WindowType::NormalWindow: return retrieveAtom("_NET_WM_WINDOW_TYPE_NORMAL", true);
-    case WindowType::Menu: return retrieveAtom("_NET_WM_WINDOW_TYPE_MENU", true);
+    case WindowType::NormalWindow:
+      return RetrieveXcbAtom(s_State.connection, "_NET_WM_WINDOW_TYPE_NORMAL", false);
+    case WindowType::Menu:
+      return RetrieveXcbAtom(s_State.connection, "_NET_WM_WINDOW_TYPE_MENU", true);
     case WindowType::Popup:
-    case WindowType::Toolbar: return retrieveAtom("_NET_WM_WINDOW_TYPE_TOOLBAR", true);
-    case WindowType::Dialog: return retrieveAtom("_NET_WM_WINDOW_TYPE_DIALOG", true);
-    case WindowType::Splash: return retrieveAtom("_NET_WM_WINDOW_TYPE_SPLASH", true);
-    case WindowType::Utility: return retrieveAtom("_NET_WM_WINDOW_TYPE_UTILITY", true);
+    case WindowType::Toolbar:
+      return RetrieveXcbAtom(s_State.connection, "_NET_WM_WINDOW_TYPE_TOOLBAR", true);
+    case WindowType::Dialog:
+      return RetrieveXcbAtom(s_State.connection, "_NET_WM_WINDOW_TYPE_DIALOG", true);
+    case WindowType::Splash:
+      return RetrieveXcbAtom(s_State.connection, "_NET_WM_WINDOW_TYPE_SPLASH", true);
+    case WindowType::Utility:
+      return RetrieveXcbAtom(s_State.connection, "_NET_WM_WINDOW_TYPE_UTILITY", true);
     default: return XCB_ATOM_NONE;
   }
 }
@@ -107,6 +99,8 @@ b8 PlatformCreateNativeWindow(
     i32 x,
     i32 y,
     WindowType type,
+    WindowMode mode,
+    WindowState state,
     void* windowDataHandle,
     const Window* parent
 ) {
@@ -115,7 +109,7 @@ b8 PlatformCreateNativeWindow(
 
   if (type == WindowType::MainWindow || type == WindowType::Splash) {
     if (parent) {
-      LOG_ERROR("Main window cannot have a parent");
+      LOG_ERROR("Main window or splash cannot have a parent");
       return false;
     }
   } else {
@@ -123,16 +117,17 @@ b8 PlatformCreateNativeWindow(
       LOG_ERROR("Child window must have a parent");
       return false;
     }
+    if (mode == WindowMode::Fullscreen || mode == WindowMode::BorderlessFullscreen) {
+      LOG_ERROR("Child window cannot be fullscreen");
+      return false;
+    }
   }
 
   xcb_window_t windowId = xcb_generate_id(s_State.connection);
   u32 valueMask         = XCB_CW_BACK_PIXEL | XCB_CW_EVENT_MASK;
   u32 valueList[2]{};
-  if (parent) {
-    valueList[0] = s_State.screen->white_pixel;
-  } else {
-    valueList[0] = s_State.screen->black_pixel;
-  }
+  valueList[0] = s_State.screen->black_pixel;
+
   valueList[1] = XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE
                  | XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_KEY_RELEASE | XCB_EVENT_MASK_EXPOSURE
                  | XCB_EVENT_MASK_POINTER_MOTION | XCB_EVENT_MASK_STRUCTURE_NOTIFY;
@@ -151,17 +146,6 @@ b8 PlatformCreateNativeWindow(
       s_State.screen->root_visual,
       valueMask,
       &valueList
-  );
-
-  xcb_change_property(
-      s_State.connection,
-      XCB_PROP_MODE_REPLACE,
-      windowId,
-      XCB_ATOM_WM_NAME,
-      XCB_ATOM_STRING,
-      8,
-      strlen(title),
-      title
   );
 
   xcb_change_property(
@@ -209,7 +193,7 @@ b8 PlatformCreateNativeWindow(
     );
   }
 
-  xcb_atom_t netWmWindowType = retrieveAtom("_NET_WM_WINDOW_TYPE", false);
+  xcb_atom_t netWmWindowType = RetrieveXcbAtom(s_State.connection, "_NET_WM_WINDOW_TYPE", false);
   xcb_atom_t windowType      = WindowTypeToXcbAtom_internal(type);
 
   xcb_change_property(
@@ -222,6 +206,81 @@ b8 PlatformCreateNativeWindow(
       1,
       &windowType
   );
+
+  xcb_atom_t wmStateAtom = RetrieveXcbAtom(s_State.connection, "_NET_WM_STATE", false);
+
+  switch (mode) {
+    case WindowMode::Windowed: {
+      xcb_atom_t windowState = RetrieveXcbAtom(s_State.connection, "_NET_WM_STATE_NORMAL", false);
+      xcb_change_property(
+          s_State.connection,
+          XCB_PROP_MODE_REPLACE,
+          windowId,
+          wmStateAtom,
+          XCB_ATOM_ATOM,
+          32,
+          1,
+          &windowState
+      );
+    } break;
+
+      // There is no destinction at the moment. I'm working on it, I promise.
+    case WindowMode::BorderlessFullscreen:
+    case WindowMode::Fullscreen: {
+      xcb_atom_t windowState =
+          RetrieveXcbAtom(s_State.connection, "_NET_WM_STATE_FULLSCREEN", false);
+      xcb_change_property(
+          s_State.connection,
+          XCB_PROP_MODE_REPLACE,
+          windowId,
+          wmStateAtom,
+          XCB_ATOM_ATOM,
+          32,
+          1,
+          &windowState
+      );
+    } break;
+
+    default: LOG_ERROR("Unknown window mode");
+  }
+
+  if (mode == WindowMode::Windowed) {
+    switch (state) {
+      case WindowState::Maximized: {
+        xcb_atom_t maxV =
+            RetrieveXcbAtom(s_State.connection, "_NET_WM_STATE_MAXIMIZED_VERT", false);
+        xcb_atom_t maxH =
+            RetrieveXcbAtom(s_State.connection, "_NET_WM_STATE_MAXIMIZED_HORZ", false);
+
+        xcb_atom_t maximized[2]{maxV, maxH};
+        xcb_change_property(
+            s_State.connection,
+            XCB_PROP_MODE_APPEND,
+            windowId,
+            wmStateAtom,
+            XCB_ATOM_ATOM,
+            32,
+            2,
+            maximized
+        );
+      } break;
+      case WindowState::Minimized: {
+        xcb_atom_t hidden = RetrieveXcbAtom(s_State.connection, "_NET_WM_STATE_HIDDEN", false);
+        xcb_change_property(
+            s_State.connection,
+            XCB_PROP_MODE_APPEND,
+            windowId,
+            wmStateAtom,
+            XCB_ATOM_ATOM,
+            32,
+            1,
+            &hidden
+        );
+      } break;
+      case WindowState::Normal: break;
+      default: LOG_ERROR("Unknown window state");
+    }
+  }
 
   xcb_intern_atom_cookie_t deleteCookie =
       xcb_intern_atom(s_State.connection, 0, strlen("WM_DELETE_WINDOW"), "WM_DELETE_WINDOW");

@@ -18,6 +18,20 @@ enum class WindowType {
   EnumCount
 };
 
+enum class WindowMode {
+  Windowed,
+  Fullscreen,
+  BorderlessFullscreen,
+  EnumCount
+};
+
+enum class WindowState {
+  Maximized,
+  Minimized,
+  Normal,
+  EnumCount
+};
+
 class Window {
 public:
   virtual ~Window() = default;
@@ -26,12 +40,15 @@ public:
       const char* title,
       u32 width,
       u32 height,
-      i32 x           = 0,
-      i32 y           = 0,
-      WindowType type = WindowType::NormalWindow
+      i32 x             = 0,
+      i32 y             = 0,
+      WindowType type   = WindowType::NormalWindow,
+      WindowMode mode   = WindowMode::Windowed,
+      WindowState state = WindowState::Normal
   ) = 0;
 
-  virtual void* NativeHandle() const  = 0;
+  virtual void* NativeHandle() const = 0;
+
   virtual u32 Width() const           = 0;
   virtual u32 Height() const          = 0;
   virtual const String& Title() const = 0;
@@ -48,6 +65,9 @@ public:
   virtual b8 Show(b8 forcePosition = false) = 0;
   virtual void Close()                      = 0;
 
+  virtual void SetWindowMode(WindowMode mode)    = 0;
+  virtual void SetWindowState(WindowState state) = 0;
+
   virtual b8 ShouldClose() const = 0;
   virtual b8 PollEvents()        = 0;
 
@@ -57,7 +77,9 @@ public:
       u32 height,
       i32 x,
       i32 y,
-      WindowType type = WindowType::MainWindow
+      WindowType type   = WindowType::MainWindow,
+      WindowMode mode   = WindowMode::Windowed,
+      WindowState state = WindowState::Normal
   );
 };
 } // namespace BE

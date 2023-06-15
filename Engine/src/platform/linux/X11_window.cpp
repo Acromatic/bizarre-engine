@@ -1,27 +1,45 @@
 #include "X11_window.h"
 
 #include "core/log.h"
+#include "platform/linux/x11_utils.h"
 #include "platform/platform.h"
 
 namespace BE {
-X11Window::X11Window(const char* title, u32 width, u32 height, i32 x, i32 y, WindowType type) :
-    m_Title(title),
-    m_Width(width),
-    m_Height(height),
-    m_Position{x, y} {
-  m_Context = new X11WindowContext{0};
-  PlatformCreateNativeWindow(title, width, height, x, y, type, m_Context);
-}
-
 X11Window::X11Window(
-    const char* title, u32 width, u32 height, i32 x, i32 y, WindowType type, const X11Window& parent
+    const char* title,
+    u32 width,
+    u32 height,
+    i32 x,
+    i32 y,
+    WindowType type,
+    WindowMode mode,
+    WindowState state
 ) :
     m_Title(title),
     m_Width(width),
     m_Height(height),
     m_Position{x, y} {
   m_Context = new X11WindowContext{0};
-  PlatformCreateNativeWindow(title, width, height, x, y, type, m_Context, &parent);
+  PlatformCreateNativeWindow(title, width, height, x, y, type, mode, state, m_Context);
+}
+
+X11Window::X11Window(
+    const char* title,
+    u32 width,
+    u32 height,
+    i32 x,
+    i32 y,
+    WindowType type,
+    WindowMode mode,
+    WindowState state,
+    const X11Window& parent
+) :
+    m_Title(title),
+    m_Width(width),
+    m_Height(height),
+    m_Position{x, y} {
+  m_Context = new X11WindowContext{0};
+  PlatformCreateNativeWindow(title, width, height, x, y, type, mode, state, m_Context, &parent);
 }
 
 X11Window::~X11Window() {
@@ -36,9 +54,17 @@ void* X11Window::NativeHandle() const {
   return nullptr;
 }
 
-Window*
-X11Window::CreateChild(const char* title, u32 width, u32 height, i32 x, i32 y, WindowType type) {
-  return new X11Window(title, width, height, x, y, type, *this);
+Window* X11Window::CreateChild(
+    const char* title,
+    u32 width,
+    u32 height,
+    i32 x,
+    i32 y,
+    WindowType type,
+    WindowMode mode,
+    WindowState state
+) {
+  return new X11Window(title, width, height, x, y, type, mode, state, *this);
 }
 
 void X11Window::SetTitle(const String& title) {}
@@ -76,6 +102,11 @@ void X11Window::Close() {
     m_Context = nullptr;
   }
 }
+
+// TODO To be implemented after input system is done
+void X11Window::SetWindowMode(WindowMode mode) {}
+
+void X11Window::SetWindowState(WindowState state) {}
 
 b8 X11Window::ShouldClose() const {
   return false;

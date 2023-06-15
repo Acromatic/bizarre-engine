@@ -15,6 +15,8 @@ b8 PlatformCreateNativeWindow(
     i32 x,
     i32 y,
     WindowType type,
+    WindowMode mode,
+    WindowState state,
     void* windowHandle,
     const Window* parent = nullptr
 );

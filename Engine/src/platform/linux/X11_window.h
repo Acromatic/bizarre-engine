@@ -24,12 +24,22 @@ public:
       u32 height,
       i32 x,
       i32 y,
-      WindowType type = WindowType::MainWindow
+      WindowType type,
+      WindowMode mode,
+      WindowState state
   );
   virtual ~X11Window();
 
-  virtual Window*
-  CreateChild(const char* title, u32 width, u32 height, i32 x, i32 y, WindowType type) override;
+  virtual Window* CreateChild(
+      const char* title,
+      u32 width,
+      u32 height,
+      i32 x,
+      i32 y,
+      WindowType type,
+      WindowMode mode,
+      WindowState state
+  ) override;
 
   virtual void* NativeHandle() const override;
 
@@ -51,6 +61,9 @@ public:
   virtual b8 Show(b8 forcePosition) override;
   virtual void Close() override;
 
+  virtual void SetWindowMode(WindowMode mode) override;
+  virtual void SetWindowState(WindowState state) override;
+
   virtual b8 ShouldClose() const override;
   virtual b8 PollEvents() override;
 
@@ -62,6 +75,8 @@ private:
       i32 x,
       i32 y,
       WindowType type,
+      WindowMode mode,
+      WindowState state,
       const X11Window& parent
   );
 
