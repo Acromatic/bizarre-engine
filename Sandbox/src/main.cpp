@@ -1,33 +1,29 @@
+#include "containers/Tuple.h"
+#include "core/Input.h"
 #include "core/Log.h"
 #include "core/Window.h"
 #include "platform/Platform.h"
+#include "utils/TypeUtils.h"
 
-int main(int argc, char *argv[]) {
-  BE::InitLogging(BE::LogLevel::Trace);
+int main(int argc, char* argv[]) {
+  using namespace BE;
 
-  BE::PlatformInit();
-  BE::Window *splash = BE::Window::Create("Splash", 1000, 300, 100, 100, BE::WindowType::Splash);
-  splash->Show();
-  BE::PlatformSleep(1000);
-  splash->Close();
+  InitLogging(LogLevel::Trace);
 
-  // Creates a mess of windows, and almost all of theme does not give a damn about the position
-  BE::Window *window = BE::Window::Create(
-      "Hello World", 1270, 720, 250, 100, BE::WindowType::MainWindow, BE::WindowMode::Windowed
-  );
+  PlatformInit();
+  InputInit();
 
-  window->Show(true);
+  Window* window = Window::Create("Bizarre Engine", 1280, 720, 0, 0);
+  window->Show();
 
-  BE::PlatformSleep(1000);
-  window->SetWindowMode(BE::WindowMode::Fullscreen);
-
-  bool result = true;
-  while (result) {
-    result = BE::PlatformPollEvents();
+  b8 running = true;
+  while (running) {
+    running = PlatformPollEvents();
   }
 
-  BE::PlatformShutdown();
-  BE::ShutdownLogging();
+  InputShutdown();
+  PlatformShutdown();
+  ShutdownLogging();
 
   return 0;
 }

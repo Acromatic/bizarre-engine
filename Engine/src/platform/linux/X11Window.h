@@ -85,6 +85,10 @@ private:
   u32 m_Width, m_Height;
   Vec2i m_Position;
 
+  WindowType m_Type;
+  WindowMode m_Mode;
+  WindowState m_State;
+
   X11WindowContext* m_Context;
 };
 

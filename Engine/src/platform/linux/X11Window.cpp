@@ -18,7 +18,10 @@ X11Window::X11Window(
     m_Title(title),
     m_Width(width),
     m_Height(height),
-    m_Position{x, y} {
+    m_Position{x, y},
+    m_Type(type),
+    m_Mode(mode),
+    m_State(state) {
   m_Context = new X11WindowContext{0};
   PlatformCreateNativeWindow(title, width, height, x, y, type, mode, state, m_Context);
 }
@@ -37,7 +40,10 @@ X11Window::X11Window(
     m_Title(title),
     m_Width(width),
     m_Height(height),
-    m_Position{x, y} {
+    m_Position{x, y},
+    m_Type(type),
+    m_Mode(mode),
+    m_State(state) {
   m_Context = new X11WindowContext{0};
   PlatformCreateNativeWindow(title, width, height, x, y, type, mode, state, m_Context, &parent);
 }

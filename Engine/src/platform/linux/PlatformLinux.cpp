@@ -1,4 +1,5 @@
 #include "core/Defines.h"
+#include "core/Input.h"
 
 #include <cstdlib>
 #include <cstring>
@@ -25,28 +26,6 @@ struct PlatformState {
 };
 
 PlatformState s_State{0};
-
-// internal functions
-
-static inline xcb_atom_t WindowTypeToXcbAtom_internal(WindowType type) {
-  switch (type) {
-    case WindowType::MainWindow:
-    case WindowType::NormalWindow:
-      return RetrieveXcbAtom(s_State.connection, "_NET_WM_WINDOW_TYPE_NORMAL", false);
-    case WindowType::Menu:
-      return RetrieveXcbAtom(s_State.connection, "_NET_WM_WINDOW_TYPE_MENU", true);
-    case WindowType::Popup:
-    case WindowType::Toolbar:
-      return RetrieveXcbAtom(s_State.connection, "_NET_WM_WINDOW_TYPE_TOOLBAR", true);
-    case WindowType::Dialog:
-      return RetrieveXcbAtom(s_State.connection, "_NET_WM_WINDOW_TYPE_DIALOG", true);
-    case WindowType::Splash:
-      return RetrieveXcbAtom(s_State.connection, "_NET_WM_WINDOW_TYPE_SPLASH", true);
-    case WindowType::Utility:
-      return RetrieveXcbAtom(s_State.connection, "_NET_WM_WINDOW_TYPE_UTILITY", true);
-    default: return XCB_ATOM_NONE;
-  }
-}
 
 // Exposed Platfrom API
 
@@ -159,6 +138,17 @@ b8 PlatformCreateNativeWindow(
       title
   );
 
+  xcb_change_property(
+      s_State.connection,
+      XCB_PROP_MODE_REPLACE,
+      windowId,
+      XCB_ATOM_WM_NAME,
+      XCB_ATOM_STRING,
+      8,
+      strlen(title),
+      title
+  );
+
   if (type != WindowType::MainWindow && type != WindowType::Splash) {
     xcb_window_t transientFor = *(xcb_window_t*)parent->NativeHandle();
 
@@ -194,7 +184,7 @@ b8 PlatformCreateNativeWindow(
   }
 
   xcb_atom_t netWmWindowType = RetrieveXcbAtom(s_State.connection, "_NET_WM_WINDOW_TYPE", false);
-  xcb_atom_t windowType      = WindowTypeToXcbAtom_internal(type);
+  xcb_atom_t windowType      = WindowTypeToXcbAtom(s_State.connection, type);
 
   xcb_change_property(
       s_State.connection,
@@ -210,19 +200,8 @@ b8 PlatformCreateNativeWindow(
   xcb_atom_t wmStateAtom = RetrieveXcbAtom(s_State.connection, "_NET_WM_STATE", false);
 
   switch (mode) {
-    case WindowMode::Windowed: {
-      xcb_atom_t windowState = RetrieveXcbAtom(s_State.connection, "_NET_WM_STATE_NORMAL", false);
-      xcb_change_property(
-          s_State.connection,
-          XCB_PROP_MODE_REPLACE,
-          windowId,
-          wmStateAtom,
-          XCB_ATOM_ATOM,
-          32,
-          1,
-          &windowState
-      );
-    } break;
+    case WindowMode::Windowed:
+      break;
 
       // There is no destinction at the moment. I'm working on it, I promise.
     case WindowMode::BorderlessFullscreen:
@@ -246,16 +225,17 @@ b8 PlatformCreateNativeWindow(
 
   if (mode == WindowMode::Windowed) {
     switch (state) {
+      // For some reason does not work!
       case WindowState::Maximized: {
         xcb_atom_t maxV =
             RetrieveXcbAtom(s_State.connection, "_NET_WM_STATE_MAXIMIZED_VERT", false);
         xcb_atom_t maxH =
             RetrieveXcbAtom(s_State.connection, "_NET_WM_STATE_MAXIMIZED_HORZ", false);
 
-        xcb_atom_t maximized[2]{maxV, maxH};
+        xcb_atom_t maximized[2]{maxH, maxV};
         xcb_change_property(
             s_State.connection,
-            XCB_PROP_MODE_APPEND,
+            XCB_PROP_MODE_PREPEND,
             windowId,
             wmStateAtom,
             XCB_ATOM_ATOM,
@@ -268,7 +248,7 @@ b8 PlatformCreateNativeWindow(
         xcb_atom_t hidden = RetrieveXcbAtom(s_State.connection, "_NET_WM_STATE_HIDDEN", false);
         xcb_change_property(
             s_State.connection,
-            XCB_PROP_MODE_APPEND,
+            XCB_PROP_MODE_REPLACE,
             windowId,
             wmStateAtom,
             XCB_ATOM_ATOM,
@@ -315,24 +295,29 @@ b8 PlatformCreateNativeWindow(
 }
 
 b8 PlatformPollEvents() {
+
   bool shouldStop{false};
   while (xcb_generic_event_t* event = xcb_poll_for_event(s_State.connection)) {
     switch (event->response_type & ~0x80) {
       case XCB_KEY_PRESS: {
         xcb_key_press_event_t* keyEvent = (xcb_key_press_event_t*)event;
-        LOG_INFO("Key pressed: %d", keyEvent->detail);
+        InputProcessKey((KeyboardKey)keyEvent->detail, true);
       } break;
       case XCB_KEY_RELEASE: {
         xcb_key_release_event_t* keyEvent = (xcb_key_release_event_t*)event;
-        LOG_INFO("Key released: %d", keyEvent->detail);
-        if (keyEvent->detail == 9) {
-          shouldStop = true;
-        }
+        InputProcessKey((KeyboardKey)keyEvent->detail, false);
+      } break;
+      case XCB_BUTTON_PRESS: {
+        xcb_button_press_event_t* buttonEvent = (xcb_button_press_event_t*)event;
+        InputProcessButton((MouseButton)buttonEvent->detail, true);
+      } break;
+      case XCB_BUTTON_RELEASE: {
+        xcb_button_release_event_t* buttonEvent = (xcb_button_release_event_t*)event;
+        InputProcessButton((MouseButton)buttonEvent->detail, false);
       } break;
       case XCB_CLIENT_MESSAGE: {
         xcb_client_message_event_t* clientMessage = (xcb_client_message_event_t*)event;
         if (clientMessage->data.data32[0] == s_State.wmDeleteWindow) {
-          LOG_INFO("Window will be closed");
           shouldStop = true;
         }
         break;

@@ -15,4 +15,4 @@ message(STATUS "Engine sources: ${_CPP_SRCS} ${_H_SRCS}")
 
 target_sources(Engine PUBLIC ${_CPP_SRCS} ${_H_SRS})
 
-target_link_libraries(Engine PUBLIC X11 xcb)
+target_link_libraries(Engine PUBLIC X11 xcb xkbcommon xkbcommon-x11)

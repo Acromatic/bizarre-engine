@@ -1,18 +1,5 @@
 #!/bin/bash
 
-CLANG_LOCATION=$(whereis clang | cut -d' ' -f2)
-CLANGXX_LOCATION=$(whereis clang++ | cut -d' ' -f2)
-
-if [[ -z "$CLANG_LOCATION" ]]; then
-    echo "Clang not found"
-    exit 1
-fi
-
-if [[ -z "$CLANGXX_LOCATION" ]]; then
-    echo "Clang++ not found"
-    exit 1
-fi
-
 if [[ $@ == *--clean* ]]; then
     echo "Cleaning build directory"
     rm -rf ./build
@@ -24,6 +11,7 @@ OVERRIDES_FILEPATH=$(pwd)/ClangOverrides.cmake
 OVERRIDES_FLAG="-DCMAKE_TOOLCHAIN_FILE=${OVERRIDES_FILEPATH}"
 
 TOOLCHAIN_FLAGS="${OVERRIDES_FLAG} -D_CMAKE_TOOLCHAIN_PREFIX=llvm-"
+
 COMPILER_FLAGS="-DCMAKE_CXX_COMPILER=clang++"
 GENERATOR_FLAG="-G Ninja"
 
