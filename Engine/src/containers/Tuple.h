@@ -84,4 +84,10 @@ public:
   Tuple(CArgs&&... args) : TupleRecurBase_<0, Ts...>(Forward<CArgs>(args)...) {}
 };
 
+template<>
+class Tuple<> {
+public:
+  constexpr be_size Size() const { return 0; }
+};
+
 } // namespace BE

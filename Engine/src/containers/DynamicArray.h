@@ -4,6 +4,9 @@
 #include "core/Defines.h"
 #include "platform/Platform.h"
 
+#include <cstring>
+#include <new>
+
 namespace BE {
 template<typename T>
 class DynamicArray {
@@ -42,7 +45,7 @@ public:
       Resize(m_Capacity * c_GrowthFactor);
     }
 
-    m_Data[m_Size++] = value;
+    new (m_Data + m_Size++) T(value);
   }
 
   void PushFront(const T& value) {

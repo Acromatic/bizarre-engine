@@ -37,11 +37,12 @@ String ModifiersToString() {
       s_KeyboardModifiers & (BeFlags)KeyboardModifierBits::Ctrl ? "yes" : "no",
       s_KeyboardModifiers & (BeFlags)KeyboardModifierBits::Alt ? "yes" : "no"
   );
+  return "";
 }
 
 b8 InputProcessKey(KeyboardKey key, b8 isDown) {
   if ((be_size)key >= (be_size)KeyboardKey::MaxKeys) {
-    LOG_ERROR("Invalid key %s", key);
+    LOG_ERROR("Invalid key {}", ToHex((u64)key));
     return false;
   }
 
@@ -50,11 +51,11 @@ b8 InputProcessKey(KeyboardKey key, b8 isDown) {
 
   s_KeyboardState[(be_size)key] = isDown;
   LOG_TRACE(
-      "Key %s (0x%x) is %s, modifiers applied: %s",
-      KeyboardKeyName(key).Data(),
-      key,
+      "Key {} (0x{}) is {}, modifiers applied: {}",
+      KeyboardKeyName(key),
+      ToHex((u64)key),
       isDown ? "down" : "up",
-      ModifiersToString().Data()
+      ModifiersToString()
   );
 
   switch (key) {
@@ -141,7 +142,7 @@ b8 AreModifiersApplied(BeFlags modifiers) {
 
 b8 InputProcessButton(MouseButton button, b8 isDown) {
   if ((be_size)button >= (be_size)MouseButton::MaxButtons) {
-    LOG_ERROR("Invalid mouse button %s", button);
+    LOG_ERROR("Invalid mouse button {}", ToHex((u64)button));
     return false;
   }
 
@@ -150,7 +151,10 @@ b8 InputProcessButton(MouseButton button, b8 isDown) {
 
   s_MouseState[(be_size)button] = isDown;
   LOG_TRACE(
-      "Mouse button %s (0x%x) is %s", MouseButtonName(button).Data(), button, isDown ? "down" : "up"
+      "Mouse button {} (0x{}) is {}",
+      MouseButtonName(button),
+      ToHex((u64)button),
+      isDown ? "down" : "up"
   );
 
   return true;

@@ -51,12 +51,6 @@ b8 PlatformInit() {
 
   s_State.screen = iter.data;
 
-  LOG_INFO("Screen information: %d", s_State.screen->root);
-  LOG_INFO("\twidth: %d", s_State.screen->width_in_pixels);
-  LOG_INFO("\theight: %d", s_State.screen->height_in_pixels);
-  LOG_INFO("\twhite pixel: %d", s_State.screen->white_pixel);
-  LOG_INFO("\tblack pixel: %d", s_State.screen->black_pixel);
-
   s_State.init = true;
   return true;
 }

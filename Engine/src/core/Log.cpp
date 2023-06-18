@@ -21,13 +21,34 @@ static const char* s_LogLevelColors[6] = {
     "\033[37;2m", "\033[36m", "\033[32m", "\033[33m", "\033[31m", "\033[1;31;4m"};
 static const char* s_ColorReset = "\033[0m";
 
-static const String getTimeString() {
+LogLevel GetLogLevel() {
+  return s_LogLevel;
+}
+
+const char* GetLogLevelName(LogLevel level) {
+  return s_LogLevelNames[(be_size)level];
+}
+
+String GetTimeString() {
   time_t rawTime;
   time(&rawTime);
   tm* timeInfo = localtime(&rawTime);
   char timeString[32];
   strftime(timeString, sizeof(timeString), "%Y-%m-%d %H:%M:%S", timeInfo);
   return String(timeString);
+}
+
+void LogToConsole(LogLevel level, const String& logMessage) {
+  FILE* output = level > LogLevel::Error ? stderr : stdout;
+  fprintf(output, "%s%s%s\n", s_LogLevelColors[(be_size)level], logMessage.Data(), s_ColorReset);
+  fflush(output);
+}
+
+void LogToFile(LogLevel level, const String& logMessage) {
+  if (!s_LogFileHandle)
+    return;
+
+  fprintf(s_LogFileHandle, "%s\n", logMessage.Data());
 }
 
 void InitLogging(LogLevel minLevel) {
@@ -46,45 +67,6 @@ void InitLogging(LogLevel minLevel) {
   if (!s_LogFileHandle) {
     fprintf(stderr, "Failed to open log file: %s\n", s_LogFilePath);
   }
-}
-
-void LogMessage(LogLevel level, const char* format, ...) {
-  if (level < s_LogLevel) {
-    return;
-  }
-
-  // Format log message
-  char buffer[256];
-  va_list args;
-  __builtin_va_start(args, format);
-  vsnprintf(buffer, sizeof(buffer), format, args);
-  __builtin_va_end(args);
-
-  char logMessage[256]{0};
-  snprintf(
-      logMessage,
-      sizeof(logMessage),
-      "[%s] %s: %s\n",
-      getTimeString().Data(),
-      s_LogLevelNames[(u32)level],
-      buffer
-  );
-
-  if (level >= LogLevel::Error) {
-    fprintf(stderr, "%s%s%s", s_LogLevelColors[(i32)level], logMessage, s_ColorReset);
-    fflush(stderr);
-  } else {
-    printf("%s%s%s", s_LogLevelColors[(i32)level], logMessage, s_ColorReset);
-    fflush(stdout);
-  }
-
-  if (!s_LogFileHandle) {
-    return;
-  }
-
-  // Print to file
-  fprintf(s_LogFileHandle, "%s", logMessage);
-  fflush(s_LogFileHandle);
 }
 
 void ShutdownLogging() {

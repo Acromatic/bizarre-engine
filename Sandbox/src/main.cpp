@@ -2,8 +2,12 @@
 #include "core/Input.h"
 #include "core/Log.h"
 #include "core/Window.h"
+#include "math/Math.h"
 #include "platform/Platform.h"
+#include "utils/StringFormat.h"
 #include "utils/TypeUtils.h"
+
+#include <cstdio>
 
 int main(int argc, char* argv[]) {
   using namespace BE;
@@ -13,13 +17,13 @@ int main(int argc, char* argv[]) {
   PlatformInit();
   InputInit();
 
-  Window* window = Window::Create("Bizarre Engine", 1280, 720, 0, 0);
-  window->Show();
-
-  b8 running = true;
-  while (running) {
-    running = PlatformPollEvents();
-  }
+  LOG_INFO("Hello, world!");
+  LOG_INFO("Hello, {}", "world!");
+  String fmt = "Hello, {}!";
+  LOG_INFO(fmt, "world");
+  LOG_INFO("Hello, {} 0x{}", "pointer", &fmt);
+  LOG_INFO("Hello, hex 0x{}", 0xDEADBEEF);
+  LOG_INFO("{} + {} = {}", 1, 2, 3);
 
   InputShutdown();
   PlatformShutdown();
