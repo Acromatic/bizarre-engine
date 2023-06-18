@@ -7,8 +7,6 @@
 #include "utils/StringFormat.h"
 #include "utils/TypeUtils.h"
 
-#include <cstdio>
-
 int main(int argc, char* argv[]) {
   using namespace BE;
 
